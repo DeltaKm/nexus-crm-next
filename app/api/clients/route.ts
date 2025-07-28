@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import { authOptions } from "../auth/[...nextauth]/route"
+import { authOptions } from "@/lib/auth"
 import { PrismaClient } from "@/app/generated/prisma"
 import { clientFormSchema } from "@/lib/schemas/client"
 // Note: authOptions will be imported from a shared config file

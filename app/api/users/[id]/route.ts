@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 import bcrypt from "bcryptjs"
@@ -27,7 +27,7 @@ async function isAdminOrSuperadmin(userId: string) {
 // GET - Recupera un singolo utente
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -42,7 +42,7 @@ export async function GET(
       return new NextResponse("Accesso negato", { status: 403 })
     }
 
-    const userId = params.id
+    const { id: userId } = await params
     
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -70,7 +70,7 @@ export async function GET(
 // PUT - Aggiorna un utente
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -85,7 +85,7 @@ export async function PUT(
       return new NextResponse("Accesso negato", { status: 403 })
     }
 
-    const userId = params.id
+    const { id: userId } = await params
     
     // Verifica che l'utente esista
     const existingUser = await prisma.user.findUnique({
@@ -140,7 +140,7 @@ export async function PUT(
 // DELETE - Elimina un utente
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -155,7 +155,7 @@ export async function DELETE(
       return new NextResponse("Accesso negato", { status: 403 })
     }
 
-    const userId = params.id
+    const { id: userId } = await params
     
     // Verifica che l'utente esista
     const existingUser = await prisma.user.findUnique({

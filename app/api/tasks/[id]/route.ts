@@ -1,15 +1,15 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { z } from "zod"
 
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { taskFormSchema } from "@/lib/validations/task"
 
 // GET /api/tasks/[id] - Recupera un task specifico
 export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -18,7 +18,7 @@ export async function GET(
       return new NextResponse("Unauthorized", { status: 401 })
     }
 
-    const id = await params.id
+    const { id } = await params
 
     const task = await prisma.task.findUnique({
       where: {
@@ -58,8 +58,8 @@ export async function GET(
 
 // PUT /api/tasks/[id] - Aggiorna un task esistente
 export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -68,7 +68,7 @@ export async function PUT(
       return new NextResponse("Unauthorized", { status: 401 })
     }
 
-    const id = await params.id
+    const { id } = await params
     const json = await request.json()
     const body = taskFormSchema.parse(json)
 
@@ -113,8 +113,8 @@ export async function PUT(
 
 // DELETE /api/tasks/[id] - Elimina un task
 export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -123,7 +123,7 @@ export async function DELETE(
       return new NextResponse("Unauthorized", { status: 401 })
     }
 
-    const id = await params.id
+    const { id } = await params
 
     // Controlla se il task esiste
     const existingTask = await prisma.task.findUnique({

@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/prisma"
 import { projectFormSchema } from "@/lib/validations/project"
 
 // GET /api/projects/:id
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -19,7 +19,7 @@ export async function GET(
       )
     }
 
-    const id = await params.id
+    const { id } = await params
 
     const project = await prisma.project.findUnique({
       where: { id },
@@ -67,7 +67,7 @@ export async function GET(
 // PUT /api/projects/:id
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -79,7 +79,7 @@ export async function PUT(
       )
     }
 
-    const id = await params.id
+    const { id } = await params
     const json = await req.json()
     
     const validatedData = projectFormSchema.parse(json)
@@ -149,7 +149,7 @@ export async function PUT(
 // DELETE /api/projects/:id
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -161,7 +161,7 @@ export async function DELETE(
       )
     }
 
-    const id = await params.id
+    const { id } = await params
     
     const project = await prisma.project.findUnique({
       where: { id },

@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { invoiceSchema } from "@/lib/validations/invoice"
 
 // GET: Recupera una fattura specifica
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -16,7 +16,7 @@ export async function GET(
       return new NextResponse("Non autorizzato", { status: 401 })
     }
 
-    const id = params.id
+    const { id } = await params
     
     // Recupera la fattura
     const invoice = await prisma.invoice.findUnique({
@@ -78,7 +78,7 @@ export async function GET(
 // PUT: Aggiorna una fattura esistente
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -87,7 +87,7 @@ export async function PUT(
       return new NextResponse("Non autorizzato", { status: 401 })
     }
 
-    const id = params.id
+    const { id } = await params
     const body = await request.json()
     
     // Validazione dei dati
@@ -179,7 +179,7 @@ export async function PUT(
 // DELETE: Elimina una fattura
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -188,7 +188,7 @@ export async function DELETE(
       return new NextResponse("Non autorizzato", { status: 401 })
     }
 
-    const id = params.id
+    const { id } = await params
 
     // Verifica che la fattura esista
     const existingInvoice = await prisma.invoice.findUnique({
