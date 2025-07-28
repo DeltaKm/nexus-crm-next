@@ -1,0 +1,192 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+// aggiunere midlle ware per controllare se l'utente è loggato
+// pusahre a login anche quando si tenta di accedere altre route
+model User {
+  id              String      @id @default(uuid())
+  name            String?
+  email           String      @unique
+  emailVerified   DateTime?   @map("email_verified")
+  password        String
+  role            String      @default("USER")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+  image           String?
+  accounts        Account[]
+  createdClients  Client[]    @relation("ClientCreator")
+  sentInvoices    Invoice[]   @relation("InvoiceSender")
+  createdProjects Project[]   @relation("ProjectCreator")
+  sessions        Session[]
+  assignedTasks   Task[]      @relation("TaskAssignee")
+  timeEntries     TimeEntry[]
+
+  @@map("users")
+}
+
+model Client {
+  id          String   @id @default(cuid())
+  name        String
+  company     String?
+  email       String?
+  phone       String?
+  address     String?
+  category    String   @default("standard")
+  status      String   @default("active")
+  notes       String?
+  lastContact DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  creatorId   String    @map("creator_id")
+  creator     User      @relation("ClientCreator", fields: [creatorId], references: [id])
+  invoices    Invoice[]
+  projects    Project[]
+
+  @@map("clients")
+}
+
+model Project {
+  id          String      @id @default(uuid())
+  name        String
+  description String?
+  status      String      @default("planning")
+  startDate   DateTime?   @map("start_date")
+  endDate     DateTime?   @map("end_date")
+  budget      Float?
+  notes       String?
+  completed   Int         @default(0)
+  repository  String?
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  clientId    String      @map("client_id")
+  creatorId   String      @map("creator_id")
+  invoices    Invoice[]
+  client      Client      @relation(fields: [clientId], references: [id])
+  creator     User        @relation("ProjectCreator", fields: [creatorId], references: [id])
+  tasks       Task[]
+  timeEntries TimeEntry[]
+
+  @@map("projects")
+}
+
+model Task {
+  id          String      @id @default(uuid())
+  title       String
+  description String?
+  status      String      @default("TODO")
+  priority    String      @default("MEDIUM")
+  dueDate     DateTime?   @map("due_date")
+  completedAt DateTime?   @map("completed_at")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  projectId   String      @map("project_id")
+  assigneeId  String?     @map("assignee_id")
+  assignee    User?       @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  project     Project     @relation(fields: [projectId], references: [id])
+  timeEntries TimeEntry[]
+
+  @@map("tasks")
+}
+
+model TimeEntry {
+  id          String       @id @default(uuid())
+  description String
+  startTime   DateTime     @map("start_time")
+  endTime     DateTime?    @map("end_time")
+  billable    Boolean      @default(true)
+  rate        Float?
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  taskId      String       @map("task_id")
+  userId      String       @map("user_id")
+  projectId   String       @map("project_id")
+  invoiceItem InvoiceItem?
+  project     Project      @relation(fields: [projectId], references: [id])
+  task        Task         @relation(fields: [taskId], references: [id])
+  user        User         @relation(fields: [userId], references: [id])
+
+  @@map("time_entries")
+}
+
+model Invoice {
+  id            String        @id @default(uuid())
+  invoiceNumber String        @unique @map("invoice_number")
+  issueDate     DateTime      @default(now()) @map("issue_date")
+  dueDate       DateTime      @map("due_date")
+  status        String        @default("DRAFT")
+  taxRate       Float         @default(0.0) @map("tax_rate")
+  notes         String?
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  clientId      String        @map("client_id")
+  projectId     String?       @map("project_id")
+  senderId      String        @map("sender_id")
+  items         InvoiceItem[]
+  client        Client        @relation(fields: [clientId], references: [id])
+  project       Project?      @relation(fields: [projectId], references: [id])
+  sender        User          @relation("InvoiceSender", fields: [senderId], references: [id])
+
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String     @id @default(uuid())
+  description String
+  quantity    Float      @default(1.0)
+  unitPrice   Float      @map("unit_price")
+  taxRate     Float      @default(0.0) @map("tax_rate")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  invoiceId   String     @map("invoice_id")
+  timeEntryId String?    @unique @map("time_entry_id")
+  invoice     Invoice    @relation(fields: [invoiceId], references: [id])
+  timeEntry   TimeEntry? @relation(fields: [timeEntryId], references: [id])
+
+  @@map("invoice_items")
+}
+
+model Account {
+  id                String  @id @default(uuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
