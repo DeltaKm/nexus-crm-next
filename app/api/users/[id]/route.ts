@@ -24,16 +24,10 @@ async function isAdminOrSuperadmin(userId: string) {
   return user && (user.role === "admin" || user.role === "superadmin")
 }
 
-type RouteParams = {
-  params: {
-    id: string
-  }
-}
-
 // GET - Recupera un singolo utente
 export async function GET(
   request: NextRequest,
-  { params }: RouteParams
+  context: any // Usiamo any come workaround temporaneo per il bug di Next.js 15
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -48,7 +42,7 @@ export async function GET(
       return new NextResponse("Accesso negato", { status: 403 })
     }
 
-    const { id } = params
+    const { id } = context.params as { id: string }
     
     const user = await prisma.user.findUnique({
       where: { id },
@@ -76,7 +70,7 @@ export async function GET(
 // PUT - Aggiorna un utente
 export async function PUT(
   request: NextRequest,
-  { params }: RouteParams
+  context: any // Usiamo any come workaround temporaneo per il bug di Next.js 15
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -91,7 +85,7 @@ export async function PUT(
       return new NextResponse("Accesso negato", { status: 403 })
     }
 
-    const { id } = params
+    const { id } = context.params as { id: string }
     
     // Verifica che l'utente esista
     const existingUser = await prisma.user.findUnique({
@@ -146,7 +140,7 @@ export async function PUT(
 // DELETE - Elimina un utente
 export async function DELETE(
   request: NextRequest,
-  { params }: RouteParams
+  context: any // Usiamo any come workaround temporaneo per il bug di Next.js 15
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -161,7 +155,7 @@ export async function DELETE(
       return new NextResponse("Accesso negato", { status: 403 })
     }
 
-    const { id } = params
+    const { id } = context.params as { id: string }
     
     // Verifica che l'utente esista
     const existingUser = await prisma.user.findUnique({

@@ -3,12 +3,18 @@ import { getServerSession } from "next-auth"
 import { PrismaClient } from "@/app/generated/prisma"
 import { clientUpdateSchema } from "@/lib/schemas/client"
 
+type RouteParams = {
+  params: {
+    id: string
+  }
+}
+
 const prisma = new PrismaClient()
 
 // GET /api/clients/[id] - Fetch single client
 export async function GET(
   request: NextRequest,
-  context: any // Usiamo any come workaround temporaneo per il bug di Next.js 15
+  { params }: RouteParams
 ) {
   try {
     const session = await getServerSession()
@@ -17,7 +23,7 @@ export async function GET(
       return NextResponse.json({ error: "Non autorizzato" }, { status: 401 })
     }
 
-    const { id } = context.params as { id: string }
+    const { id } = params
 
     const client = await prisma.client.findUnique({
       where: { id },
@@ -52,15 +58,18 @@ export async function GET(
 
     return NextResponse.json(client)
   } catch (error) {
-    console.error("[CLIENT_GET]", error)
-    return NextResponse.json({ error: "Errore interno" }, { status: 500 })
+    console.error("Error fetching client:", error)
+    return NextResponse.json(
+      { error: "Errore interno del server" },
+      { status: 500 }
+    )
   }
 }
 
 // PUT /api/clients/[id] - Update client
 export async function PUT(
   request: NextRequest,
-  context: any // Usiamo any come workaround temporaneo per il bug di Next.js 15
+  { params }: RouteParams
 ) {
   try {
     const session = await getServerSession()
@@ -69,35 +78,54 @@ export async function PUT(
       return NextResponse.json({ error: "Non autorizzato" }, { status: 401 })
     }
 
-    const { id } = context.params as { id: string }
-    const json = await request.json()
-    
-    const validatedData = clientUpdateSchema.parse(json)
-    
-    // Format lastContact as Date or null
-    const lastContact = validatedData.lastContact 
-      ? new Date(validatedData.lastContact) 
-      : null
+    const { id } = params
+    const body = await request.json()
+    const validatedData = clientUpdateSchema.parse(body)
 
-    const updatedClient = await prisma.client.update({
+    // Gestisci il campo lastContact - converti stringa vuota in null
+    const processedData = {
+      ...validatedData,
+      lastContact: validatedData.lastContact === "" ? null : validatedData.lastContact
+    }
+
+    const client = await prisma.client.update({
       where: { id },
-      data: {
-        ...validatedData,
-        lastContact
+      data: processedData,
+      include: {
+        creator: {
+          select: { id: true, name: true, email: true }
+        },
+        _count: {
+          select: {
+            projects: true,
+            invoices: true
+          }
+        }
       }
     })
 
-    return NextResponse.json(updatedClient)
+    return NextResponse.json(client)
   } catch (error) {
-    console.error("[CLIENT_PUT]", error)
-    return NextResponse.json({ error: "Errore interno" }, { status: 500 })
+    console.error("Error updating client:", error)
+    
+    if (error instanceof Error && error.name === "ZodError") {
+      return NextResponse.json(
+        { error: "Dati non validi", details: error },
+        { status: 400 }
+      )
+    }
+
+    return NextResponse.json(
+      { error: "Errore interno del server" },
+      { status: 500 }
+    )
   }
 }
 
 // DELETE /api/clients/[id] - Delete client
 export async function DELETE(
   request: NextRequest,
-  context: any // Usiamo any come workaround temporaneo per il bug di Next.js 15
+  { params }: RouteParams
 ) {
   try {
     const session = await getServerSession()
@@ -106,7 +134,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Non autorizzato" }, { status: 401 })
     }
 
-    const { id } = context.params as { id: string }
+    const { id } = params
     
     // Check if client has associated projects or invoices
     const client = await prisma.client.findUnique({
@@ -125,21 +153,23 @@ export async function DELETE(
       return NextResponse.json({ error: "Cliente non trovato" }, { status: 404 })
     }
 
-    // Prevent deletion if client has projects or invoices
     if (client._count.projects > 0 || client._count.invoices > 0) {
-      return NextResponse.json({ 
-        error: "Impossibile eliminare il cliente perché ha progetti o fatture associati" 
-      }, { status: 400 })
+      return NextResponse.json(
+        { error: "Impossibile eliminare il cliente: ha progetti o fatture associati" },
+        { status: 400 }
+      )
     }
 
-    // Delete the client
-    await prisma.client.delete({
-      where: { id }
+    const deletedClient = await prisma.client.delete({
+      where: { id },
     })
 
-    return new NextResponse(null, { status: 204 })
+    return NextResponse.json({ message: "Cliente eliminato con successo" })
   } catch (error) {
-    console.error("[CLIENT_DELETE]", error)
-    return NextResponse.json({ error: "Errore interno" }, { status: 500 })
+    console.error("Error deleting client:", error)
+    return NextResponse.json(
+      { error: "Errore interno del server" },
+      { status: 500 }
+    )
   }
 }

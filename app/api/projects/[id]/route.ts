@@ -4,16 +4,10 @@ import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/prisma"
 import { projectFormSchema } from "@/lib/validations/project"
 
-type RouteParams = {
-  params: {
-    id: string
-  }
-}
-
 // GET /api/projects/:id
 export async function GET(
   req: NextRequest,
-  { params }: RouteParams
+  context: any // Usiamo any come workaround temporaneo per il bug di Next.js 15
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -25,7 +19,7 @@ export async function GET(
       )
     }
 
-    const { id } = await params
+    const { id } = context.params as { id: string }
 
     const project = await prisma.project.findUnique({
       where: { id },
@@ -73,7 +67,7 @@ export async function GET(
 // PUT /api/projects/:id
 export async function PUT(
   req: NextRequest,
-  { params }: RouteParams
+  context: any // Usiamo any come workaround temporaneo per il bug di Next.js 15
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -85,7 +79,7 @@ export async function PUT(
       )
     }
 
-    const { id } = await params
+    const { id } = context.params as { id: string }
     const json = await req.json()
     
     const validatedData = projectFormSchema.parse(json)
@@ -155,7 +149,7 @@ export async function PUT(
 // DELETE /api/projects/:id
 export async function DELETE(
   req: NextRequest,
-  { params }: RouteParams
+  context: any // Usiamo any come workaround temporaneo per il bug di Next.js 15
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -167,7 +161,7 @@ export async function DELETE(
       )
     }
 
-    const { id } = await params
+    const { id } = context.params as { id: string }
     
     const project = await prisma.project.findUnique({
       where: { id },
@@ -201,11 +195,12 @@ export async function DELETE(
       )
     }
 
+    // Se non ci sono dipendenze, elimina il progetto
     await prisma.project.delete({
       where: { id },
     })
 
-    return NextResponse.json({ success: true })
+    return new NextResponse(null, { status: 204 })
   } catch (error) {
     console.error("Error deleting project:", error)
     return NextResponse.json(

@@ -6,16 +6,10 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { taskFormSchema } from "@/lib/validations/task"
 
-type RouteParams = {
-  params: {
-    id: string
-  }
-}
-
 // GET /api/tasks/[id] - Recupera un task specifico
 export async function GET(
   request: NextRequest,
-  { params }: RouteParams
+  context: any // Usiamo any come workaround temporaneo per il bug di Next.js 15
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -24,7 +18,7 @@ export async function GET(
       return new NextResponse("Unauthorized", { status: 401 })
     }
 
-    const { id } = params
+    const { id } = context.params as { id: string }
 
     const task = await prisma.task.findUnique({
       where: {
@@ -65,7 +59,7 @@ export async function GET(
 // PUT /api/tasks/[id] - Aggiorna un task esistente
 export async function PUT(
   request: NextRequest,
-  { params }: RouteParams
+  context: any // Usiamo any come workaround temporaneo per il bug di Next.js 15
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -74,7 +68,7 @@ export async function PUT(
       return new NextResponse("Unauthorized", { status: 401 })
     }
 
-    const { id } = params
+    const { id } = context.params as { id: string }
     const json = await request.json()
     const body = taskFormSchema.parse(json)
 
@@ -120,7 +114,7 @@ export async function PUT(
 // DELETE /api/tasks/[id] - Elimina un task
 export async function DELETE(
   request: NextRequest,
-  { params }: RouteParams
+  context: any // Usiamo any come workaround temporaneo per il bug di Next.js 15
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -129,7 +123,7 @@ export async function DELETE(
       return new NextResponse("Unauthorized", { status: 401 })
     }
 
-    const { id } = params
+    const { id } = context.params as { id: string }
 
     // Controlla se il task esiste
     const existingTask = await prisma.task.findUnique({

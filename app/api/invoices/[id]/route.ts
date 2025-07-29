@@ -4,16 +4,10 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { invoiceSchema } from "@/lib/validations/invoice"
 
-type RouteParams = {
-  params: {
-    id: string
-  }
-}
-
 // GET: Recupera una fattura specifica
 export async function GET(
   request: NextRequest,
-  { params }: RouteParams
+  context: any // Usiamo any come workaround temporaneo per il bug di Next.js 15
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -22,7 +16,7 @@ export async function GET(
       return new NextResponse("Non autorizzato", { status: 401 })
     }
 
-    const { id } = params
+    const { id } = context.params as { id: string }
     
     // Recupera la fattura
     const invoice = await prisma.invoice.findUnique({
@@ -84,7 +78,7 @@ export async function GET(
 // PUT: Aggiorna una fattura esistente
 export async function PUT(
   request: NextRequest,
-  { params }: RouteParams
+  context: any // Usiamo any come workaround temporaneo per il bug di Next.js 15
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -93,7 +87,7 @@ export async function PUT(
       return new NextResponse("Non autorizzato", { status: 401 })
     }
 
-    const { id } = params
+    const { id } = context.params as { id: string }
     const body = await request.json()
     
     // Validazione dei dati
@@ -185,7 +179,7 @@ export async function PUT(
 // DELETE: Elimina una fattura
 export async function DELETE(
   request: NextRequest,
-  { params }: RouteParams
+  context: any // Usiamo any come workaround temporaneo per il bug di Next.js 15
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -194,29 +188,29 @@ export async function DELETE(
       return new NextResponse("Non autorizzato", { status: 401 })
     }
 
-    const { id } = params
+    const { id } = context.params as { id: string }
 
     // Verifica che la fattura esista
     const existingInvoice = await prisma.invoice.findUnique({
-      where: { id }
+      where: { id },
+      include: { items: true }
     })
 
     if (!existingInvoice) {
       return new NextResponse("Fattura non trovata", { status: 404 })
     }
 
-    // Elimina la fattura e gli elementi associati in una transazione
-    await prisma.$transaction(async (tx) => {
-      // Elimina gli elementi della fattura
-      await tx.invoiceItem.deleteMany({
+    // Elimina la fattura e i suoi elementi correlati
+    await prisma.$transaction([
+      // Prima elimina gli elementi della fattura
+      prisma.invoiceItem.deleteMany({
         where: { invoiceId: id }
-      })
-
-      // Elimina la fattura
-      await tx.invoice.delete({
+      }),
+      // Poi elimina la fattura
+      prisma.invoice.delete({
         where: { id }
       })
-    })
+    ])
 
     return new NextResponse(null, { status: 204 })
   } catch (error) {

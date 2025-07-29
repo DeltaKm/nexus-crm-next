@@ -1,0 +1,168 @@
+"use client"
+
+import { useState, useEffect, Suspense, useCallback } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { format } from "date-fns"
+import { it } from "date-fns/locale"
+import { Search } from "lucide-react"
+
+import { DashboardLayout } from "@/components/layout/DashboardLayout"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { AddInvoiceDialog } from "@/components/invoices/AddInvoiceDialog"
+import { InvoiceDetailsDialog } from "@/components/invoices/InvoiceDetailsDialog"
+
+interface Client {
+  id: string
+  name: string
+  company?: string | null
+}
+
+interface Project {
+  id: string
+  name: string
+}
+
+interface Invoice {
+  id: string
+  invoiceNumber: string
+  issueDate: string
+  dueDate: string
+  status: "DRAFT" | "SENT" | "PAID" | "OVERDUE" | "CANCELLED"
+  taxRate: number
+  notes?: string | null
+  clientId: string
+  projectId?: string | null
+  client: Client
+  project?: Project | null
+  items: Array<{
+    id: string
+    description: string
+    quantity: number
+    unitPrice: number
+    taxRate: number
+  }>
+  sender: {
+    id: string
+    name: string
+    email: string
+  }
+  createdAt: string
+  updatedAt: string
+}
+
+// Componente interno che utilizza useSearchParams
+function InvoicesContent() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  
+  // State declarations
+  const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [clients, setClients] = useState<Client[]>([])
+  const [projects, setProjects] = useState<Project[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false)
+  
+  // Filtri con valori di default dai searchParams
+  const [statusFilter, setStatusFilter] = useState(searchParams?.get("status") || "")
+  const [clientFilter, setClientFilter] = useState(searchParams?.get("clientId") || "")
+  const [projectFilter, setProjectFilter] = useState(searchParams?.get("projectId") || "")
+  const [searchFilter, setSearchFilter] = useState(searchParams?.get("search") || "")
+
+  const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [clients, setClients] = useState<Client[]>([])
+  const [projects, setProjects] = useState<Project[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false)
+
+  // Filtri con valori di default dai searchParams
+  const [statusFilter, setStatusFilter] = useState(searchParams?.get("status") || "")
+  const [clientFilter, setClientFilter] = useState(searchParams?.get("clientId") || "")
+  const [projectFilter, setProjectFilter] = useState(searchParams?.get("projectId") || "")
+  const [searchFilter, setSearchFilter] = useState(searchParams?.get("search") || "")
+
+  // ... resto del codice del componente InvoicesContent ...
+  // (tutto il codice esistente della pagina, tranne l'export default finale)
+
+  return (
+    // ... resto del codice del componente InvoicesContent ...
+  )
+}
+
+// Componente principale che avvolge il contenuto in un Suspense
+function InvoicesPage() {
+  return (
+    <DashboardLayout>
+      <Suspense fallback={
+        <div className="container mx-auto py-6">
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        </div>
+      }>
+        <InvoicesContent />
+      </Suspense>
+    </DashboardLayout>
+  )
+}
+
+// Interfacce
+interface Client {
+  id: string
+  name: string
+  company?: string | null
+}
+
+interface Project {
+  id: string
+  name: string
+}
+
+interface Invoice {
+  id: string
+  invoiceNumber: string
+  issueDate: string
+  dueDate: string
+  status: "DRAFT" | "SENT" | "PAID" | "OVERDUE" | "CANCELLED"
+  taxRate: number
+  notes?: string | null
+  clientId: string
+  projectId?: string | null
+  client: {
+    id: string
+    name: string
+    company?: string | null
+  }
+  project?: {
+    id: string
+    name: string
+  } | null
+  items: Array<{
+    id: string
+    description: string
+    quantity: number
+    unitPrice: number
+    taxRate: number
+  }>
+  sender: {
+    id: string
+    name: string
+    email: string
+  }
+  createdAt: string
+  updatedAt: string
+}
+
+export default InvoicesPage
