@@ -193,9 +193,9 @@ export default function UsersPage() {
           </Alert>
         )}
         
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Gestione Utenti</h1>
-        </div>
+        {/* <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Gestione Utent</h1>
+        </div> */}
 
         <UserManager
           users={users}
