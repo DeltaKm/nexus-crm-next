@@ -3,12 +3,18 @@ import { getServerSession } from "next-auth"
 import { PrismaClient } from "@/app/generated/prisma"
 import { clientUpdateSchema } from "@/lib/schemas/client"
 
+type RouteParams = {
+  params: {
+    id: string
+  }
+}
+
 const prisma = new PrismaClient()
 
 // GET /api/clients/[id] - Fetch single client
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteParams
 ) {
   try {
     const session = await getServerSession()
@@ -17,9 +23,10 @@ export async function GET(
       return NextResponse.json({ error: "Non autorizzato" }, { status: 401 })
     }
 
-    const resolvedParams = await params
+    const { id } = params
+
     const client = await prisma.client.findUnique({
-      where: { id: resolvedParams.id },
+      where: { id },
       include: {
         creator: {
           select: { id: true, name: true, email: true }
@@ -62,7 +69,7 @@ export async function GET(
 // PUT /api/clients/[id] - Update client
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteParams
 ) {
   try {
     const session = await getServerSession()
@@ -71,7 +78,7 @@ export async function PUT(
       return NextResponse.json({ error: "Non autorizzato" }, { status: 401 })
     }
 
-    const resolvedParams = await params
+    const { id } = params
     const body = await request.json()
     const validatedData = clientUpdateSchema.parse(body)
 
@@ -82,7 +89,7 @@ export async function PUT(
     }
 
     const client = await prisma.client.update({
-      where: { id: resolvedParams.id },
+      where: { id },
       data: processedData,
       include: {
         creator: {
@@ -118,7 +125,7 @@ export async function PUT(
 // DELETE /api/clients/[id] - Delete client
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteParams
 ) {
   try {
     const session = await getServerSession()
@@ -127,11 +134,11 @@ export async function DELETE(
       return NextResponse.json({ error: "Non autorizzato" }, { status: 401 })
     }
 
-    const resolvedParams = await params
+    const { id } = params
     
     // Check if client has associated projects or invoices
     const client = await prisma.client.findUnique({
-      where: { id: resolvedParams.id },
+      where: { id },
       include: {
         _count: {
           select: {
@@ -153,8 +160,8 @@ export async function DELETE(
       )
     }
 
-    await prisma.client.delete({
-      where: { id: resolvedParams.id }
+    const deletedClient = await prisma.client.delete({
+      where: { id },
     })
 
     return NextResponse.json({ message: "Cliente eliminato con successo" })

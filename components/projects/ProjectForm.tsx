@@ -1,6 +1,5 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQuery } from "@tanstack/react-query"
@@ -12,7 +11,6 @@ import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -45,15 +43,13 @@ interface Client {
 
 interface ProjectFormProps {
   defaultValues?: Partial<ProjectFormValues>
-  onSubmit: (data: ProjectFormValues) => void
+  onSubmit: (data: ProjectFormValues) => Promise<void> | void
   isSubmitting: boolean
 }
 
 export function ProjectForm({ defaultValues, onSubmit, isSubmitting }: ProjectFormProps) {
-  // @ts-ignore - Ignora errori di tipo con zodResolver
   const form = useForm<ProjectFormValues>({
-    // @ts-ignore - Ignora errori di tipo con zodResolver
-    resolver: zodResolver(projectFormSchema),
+    resolver: zodResolver(projectFormSchema) as any, // Type assertion for zodResolver
     defaultValues: {
       name: "",
       description: "",
@@ -83,10 +79,23 @@ export function ProjectForm({ defaultValues, onSubmit, isSubmitting }: ProjectFo
 
   return (
     <Form {...form}>
-      {/* @ts-ignore - Ignora errori di tipo con form.handleSubmit */}
-      <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-6">
+      <form onSubmit={form.handleSubmit((data) => {
+        // Ensure we're only passing the expected values
+        const formData: ProjectFormValues = {
+          name: data.name,
+          description: data.description,
+          clientId: data.clientId,
+          startDate: data.startDate,
+          endDate: data.endDate,
+          status: data.status,
+          budget: data.budget,
+          notes: data.notes,
+          completed: data.completed,
+          repository: data.repository,
+        };
+        return onSubmit(formData);
+      })} className="space-y-6">
         <FormField
-          // @ts-ignore - Ignora errori di tipo duplicati in react-hook-form
           control={form.control}
           name="name"
           render={({ field }) => (

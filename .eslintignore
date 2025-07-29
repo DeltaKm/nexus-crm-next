@@ -1,0 +1,20 @@
+# Ignore generated files
+.next/
+node_modules/
+**/generated/
+**/dist/
+**/build/
+**/*.d.ts
+**/*.js
+!**/*.config.js
+
+# Ignore Prisma generated files
+app/generated/prisma/
+
+# Ignore build output
+out/
+
+# Ignore cache
+.cache/
+.vscode/
+.idea/

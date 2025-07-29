@@ -24,10 +24,16 @@ async function isAdminOrSuperadmin(userId: string) {
   return user && (user.role === "admin" || user.role === "superadmin")
 }
 
+type RouteParams = {
+  params: {
+    id: string
+  }
+}
+
 // GET - Recupera un singolo utente
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteParams
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -42,10 +48,10 @@ export async function GET(
       return new NextResponse("Accesso negato", { status: 403 })
     }
 
-    const { id: userId } = await params
+    const { id } = params
     
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id },
       select: {
         id: true,
         name: true,
@@ -70,7 +76,7 @@ export async function GET(
 // PUT - Aggiorna un utente
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteParams
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -85,11 +91,11 @@ export async function PUT(
       return new NextResponse("Accesso negato", { status: 403 })
     }
 
-    const { id: userId } = await params
+    const { id } = params
     
     // Verifica che l'utente esista
     const existingUser = await prisma.user.findUnique({
-      where: { id: userId }
+      where: { id }
     })
 
     if (!existingUser) {
@@ -114,7 +120,7 @@ export async function PUT(
 
     // Aggiorna l'utente
     const updatedUser = await prisma.user.update({
-      where: { id: userId },
+      where: { id },
       data: updateData,
       select: {
         id: true,
@@ -140,7 +146,7 @@ export async function PUT(
 // DELETE - Elimina un utente
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteParams
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -155,11 +161,11 @@ export async function DELETE(
       return new NextResponse("Accesso negato", { status: 403 })
     }
 
-    const { id: userId } = await params
+    const { id } = params
     
     // Verifica che l'utente esista
     const existingUser = await prisma.user.findUnique({
-      where: { id: userId }
+      where: { id }
     })
 
     if (!existingUser) {
@@ -167,13 +173,13 @@ export async function DELETE(
     }
 
     // Impedisci l'eliminazione di se stessi
-    if (userId === session.user.id) {
+    if (id === session.user.id) {
       return new NextResponse("Non puoi eliminare il tuo account", { status: 400 })
     }
 
     // Elimina l'utente
     await prisma.user.delete({
-      where: { id: userId }
+      where: { id },
     })
 
     return new NextResponse(null, { status: 204 })

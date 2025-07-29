@@ -6,7 +6,7 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { taskFormSchema } from "@/lib/validations/task"
 
-type RouteParams = {
+interface RouteContext {
   params: {
     id: string
   }
@@ -15,9 +15,10 @@ type RouteParams = {
 // GET /api/tasks/[id] - Recupera un task specifico
 export async function GET(
   request: NextRequest,
-  { params }: RouteParams
+  context: RouteContext
 ) {
   try {
+    const { params } = context
     const session = await getServerSession(authOptions)
 
     if (!session?.user) {
@@ -65,9 +66,10 @@ export async function GET(
 // PUT /api/tasks/[id] - Aggiorna un task esistente
 export async function PUT(
   request: NextRequest,
-  { params }: RouteParams
+  context: RouteContext
 ) {
   try {
+    const { params } = context
     const session = await getServerSession(authOptions)
 
     if (!session?.user) {
@@ -120,9 +122,10 @@ export async function PUT(
 // DELETE /api/tasks/[id] - Elimina un task
 export async function DELETE(
   request: NextRequest,
-  { params }: RouteParams
+  context: RouteContext
 ) {
   try {
+    const { params } = context
     const session = await getServerSession(authOptions)
 
     if (!session?.user) {

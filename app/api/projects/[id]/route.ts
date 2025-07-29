@@ -4,10 +4,16 @@ import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/prisma"
 import { projectFormSchema } from "@/lib/validations/project"
 
+type RouteParams = {
+  params: {
+    id: string
+  }
+}
+
 // GET /api/projects/:id
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteParams
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -67,7 +73,7 @@ export async function GET(
 // PUT /api/projects/:id
 export async function PUT(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteParams
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -149,7 +155,7 @@ export async function PUT(
 // DELETE /api/projects/:id
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteParams
 ) {
   try {
     const session = await getServerSession(authOptions)
