@@ -18,17 +18,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { EditInvoiceDialog } from "./EditInvoiceDialog"
 import { ConfirmDialog } from "@/components/ConfirmDialog"
-
-interface Client {
-  id: string
-  name: string
-  company?: string | null
-}
-
-interface Project {
-  id: string
-  name: string
-}
+import type { Client } from "@/types/client"
+import type { Project } from "@/types/project"
 
 interface Invoice {
   id: string
@@ -40,15 +31,8 @@ interface Invoice {
   notes?: string | null
   clientId: string
   projectId?: string | null
-  client: {
-    id: string
-    name: string
-    company?: string | null
-  }
-  project?: {
-    id: string
-    name: string
-  } | null
+  client: Client
+  project?: Project | null
   items: Array<{
     id: string
     description: string

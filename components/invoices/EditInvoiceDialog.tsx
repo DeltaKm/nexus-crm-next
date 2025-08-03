@@ -12,20 +12,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { InvoiceForm } from "./InvoiceForm"
+import { InvoiceForm, useInvoiceForm } from "./InvoiceForm"
 import { toast } from "@/components/ui/use-toast"
+import type { Client } from "@/types/client"
+import type { Project } from "@/types/project"
+import { InvoiceStatus } from "@/lib/validations/invoice"
 
-interface Client {
-  id: string
-  name: string
-  company?: string | null
-}
-
-interface Project {
-  id: string
-  name: string
-}
-
+// Import the Invoice type if it's defined elsewhere
+// Otherwise, define it here with all required fields
 interface Invoice {
   id: string
   invoiceNumber: string
@@ -59,6 +53,15 @@ export function EditInvoiceDialog({
 }: EditInvoiceDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
+  
+  // Initialize form with default values from the invoice
+  const form = useInvoiceForm({
+    ...invoice,
+    issueDate: invoice.issueDate ? new Date(invoice.issueDate) : new Date(),
+    dueDate: invoice.dueDate ? new Date(invoice.dueDate) : new Date(),
+    status: invoice.status as InvoiceStatus,
+    items: invoice.items || []
+  })
 
   const handleSubmit = async (data: any) => {
     setIsSubmitting(true)
@@ -83,19 +86,17 @@ export function EditInvoiceDialog({
 
       toast({
         title: "Fattura aggiornata",
-        description: "La fattura è stata aggiornata con successo",
+        description: "La fattura è stata aggiornata con successo.",
       })
       
+      onInvoiceUpdated?.()
       onOpenChange(false)
       router.refresh()
-      
-      if (onInvoiceUpdated) {
-        onInvoiceUpdated()
-      }
-    } catch (error: any) {
+    } catch (error) {
+      console.error("Error updating invoice:", error)
       toast({
         title: "Errore",
-        description: error.message || "Si è verificato un errore",
+        description: "Si è verificato un errore durante l'aggiornamento della fattura.",
         variant: "destructive",
       })
     } finally {
@@ -113,11 +114,7 @@ export function EditInvoiceDialog({
           </DialogDescription>
         </DialogHeader>
         <InvoiceForm
-          defaultValues={{
-            ...invoice,
-            issueDate: invoice.issueDate ? new Date(invoice.issueDate) : new Date(),
-            dueDate: invoice.dueDate ? new Date(invoice.dueDate) : new Date()
-          }}
+          form={form}
           clients={clients}
           projects={projects}
           onSubmit={handleSubmit}
