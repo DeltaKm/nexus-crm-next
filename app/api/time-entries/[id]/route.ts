@@ -21,7 +21,6 @@ export async function GET(
     const timeEntry = await prisma.timeEntry.findFirst({
       where: {
         id,
-        userId: session.user.id,
       },
       include: {
         project: {
@@ -90,11 +89,10 @@ export async function PUT(
     const { id } = context.params as { id: string }
     const body = await request.json()
 
-    // Verifica che la time entry esista e appartenga all'utente
+    // Verifica che la time entry esista
     const existingTimeEntry = await prisma.timeEntry.findFirst({
       where: {
         id,
-        userId: session.user.id,
       }
     })
 
@@ -261,11 +259,10 @@ export async function DELETE(
 
     const { id } = context.params as { id: string }
 
-    // Verifica che la time entry esista e appartenga all'utente
+    // Verifica che la time entry esista
     const timeEntry = await prisma.timeEntry.findFirst({
       where: {
         id,
-        userId: session.user.id,
       }
     })
 

@@ -33,7 +33,10 @@ export async function GET(request: NextRequest) {
     
     if (!currentUser || (userRole !== "admin" && userRole !== "superadmin")) {
       console.log("Accesso negato: ruolo utente", currentUser?.role)
-      return new NextResponse("Accesso negato", { status: 403 })
+      return NextResponse.json(
+        { error: "Accesso negato" }, 
+        { status: 403 }
+      )
     }
 
     // Recupera tutti gli utenti con informazioni complete
@@ -76,7 +79,10 @@ export async function POST(request: NextRequest) {
     const userRole = currentUser?.role?.toLowerCase()
     
     if (!currentUser || (userRole !== "admin" && userRole !== "superadmin")) {
-      return new NextResponse("Accesso negato", { status: 403 })
+      return NextResponse.json(
+        { error: "Accesso negato" }, 
+        { status: 403 }
+      )
     }
 
     const body = await request.json()
@@ -88,7 +94,10 @@ export async function POST(request: NextRequest) {
     })
 
     if (existingUser) {
-      return new NextResponse("Un utente con questa email esiste già", { status: 400 })
+      return NextResponse.json(
+        { error: "Un utente con questa email esiste già" }, 
+        { status: 400 }
+      )
     }
 
     // Hash della password
@@ -115,10 +124,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(newUser, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return new NextResponse(JSON.stringify(error.format()), { status: 400 })
+      return NextResponse.json(
+        { error: "Dati non validi", details: error.format() }, 
+        { status: 400 }
+      )
     }
     
     console.error("Errore nella creazione dell'utente:", error)
-    return new NextResponse("Errore interno del server", { status: 500 })
+    return NextResponse.json(
+      { error: "Errore interno del server" }, 
+      { status: 500 }
+    )
   }
 }

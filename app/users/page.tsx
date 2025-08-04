@@ -26,7 +26,7 @@ export default function UsersPage() {
       
       const userData = await response.json()
       setUserRole(userData.role)
-      setIsSuperAdmin(userData.role === "superadmin")
+      setIsSuperAdmin(userData.role?.toLowerCase() === "superadmin")
       return userData.role
     } catch (error) {
       console.error("Errore nel recupero del ruolo:", error)
@@ -73,8 +73,15 @@ export default function UsersPage() {
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || "Errore nella creazione dell'utente")
+        let errorMessage = "Errore nella creazione dell'utente"
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.error || errorData.message || errorMessage
+        } catch {
+          // Se la risposta non è JSON, usa il testo della risposta
+          errorMessage = await response.text() || errorMessage
+        }
+        throw new Error(errorMessage)
       }
 
       const newUser = await response.json()

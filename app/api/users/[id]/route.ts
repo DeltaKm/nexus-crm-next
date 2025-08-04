@@ -21,7 +21,8 @@ async function isAdminOrSuperadmin(userId: string) {
     select: { role: true }
   })
   
-  return user && (user.role === "admin" || user.role === "superadmin")
+  const userRole = user?.role?.toLowerCase()
+  return user && (userRole === "admin" || userRole === "superadmin")
 }
 
 // GET - Recupera un singolo utente

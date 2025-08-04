@@ -17,6 +17,7 @@ import {
   LogOut,
   User
 } from "lucide-react"
+import { ChevronDoubleRightIcon } from "@heroicons/react/24/solid"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -30,8 +31,12 @@ const navigation = [
   { name: "Time Tracking", href: "/time-entries", icon: Clock },
   { name: "Scadenziario", href: "/deadlines", icon: Calendar },
   { name: "Calendario", href: "/calendar", icon: CalendarDays },
-  { name: "Comunicazioni", href: "/communications", icon: MessageSquare },
-  { name: "Report", href: "/reports", icon: BarChart3 },
+]
+
+// Voci di menu in arrivo (non cliccabili)
+const comingSoonNavigation = [
+  { name: "Comunicazioni", icon: MessageSquare },
+  { name: "Report", icon: BarChart3 },
 ]
 
 // Voci di menu visibili solo per admin e superadmin
@@ -52,7 +57,12 @@ export function Sidebar() {
     <div className="flex h-full w-64 flex-col bg-white border-r border-gray-200">
       {/* Logo */}
       <div className="flex h-16 shrink-0 items-center px-6 border-b border-gray-200">
-        <h1 className="text-xl font-bold text-gray-900">Nexus CRM</h1>
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center justify-center w-8 h-8 bg-blue-600 rounded-lg">
+            <ChevronDoubleRightIcon className="w-5 h-5 text-white" />
+          </div>
+          <h1 className="text-xl font-bold text-gray-900">Nexus CRM</h1>
+        </div>
       </div>
 
       {/* Navigation */}
@@ -84,15 +94,25 @@ export function Sidebar() {
             )
           })}
           
+          {/* Coming Soon Navigation */}
+          <div className="mt-6 mb-2">
+            <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">In Arrivo</p>
+          </div>
+          {comingSoonNavigation.map((item) => (
+            <li key={item.name}>
+              <div className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-400 cursor-not-allowed">
+                <div className="flex items-center">
+                  <item.icon className="mr-3 h-5 w-5 shrink-0 text-gray-300" />
+                  {item.name}
+                </div>
+                <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full font-medium">
+                  soon
+                </span>
+              </div>
+            </li>
+          ))}
+
           {/* Admin Navigation - visibile solo per admin e superadmin */}
-          {/* Debug info */}
-          <li className="mt-4 px-3 text-xs text-gray-500">
-            Ruolo: {session?.user?.role || "Nessun ruolo"}
-            <br />
-            Admin: {session?.user?.role?.toLowerCase() === "admin" ? "Sì" : "No"}
-            <br />
-            SuperAdmin: {session?.user?.role?.toLowerCase() === "superadmin" ? "Sì" : "No"}
-          </li>
           
           {/* Condizione esplicita per admin/superadmin (case-insensitive) */}
           {session?.user?.role && (session.user.role.toLowerCase() === "admin" || session.user.role.toLowerCase() === "superadmin") && (

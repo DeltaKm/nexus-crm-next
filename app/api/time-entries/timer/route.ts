@@ -101,20 +101,16 @@ export async function POST(request: NextRequest) {
       return new NextResponse("Hai già un timer attivo. Fermalo prima di iniziarne uno nuovo.", { status: 400 })
     }
 
-    // Verifica che il progetto e il task esistano e appartengano all'utente
+    // Verifica che il progetto e il task esistano
     const [project, task] = await Promise.all([
       prisma.project.findFirst({
         where: {
           id: validatedData.projectId,
-          creatorId: session.user.id
         }
       }),
       prisma.task.findFirst({
         where: {
           id: validatedData.taskId,
-          project: {
-            creatorId: session.user.id
-          }
         }
       })
     ])

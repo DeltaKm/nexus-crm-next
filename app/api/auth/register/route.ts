@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
         name: fullName,
         email,
         password: hashedPassword,
-        role: isFirstUser ? "ADMIN" : "USER", // Primo utente = ADMIN
+        role: isFirstUser ? "admin" : "user", // Primo utente = admin
         emailVerified: new Date(), // Auto-verifica per semplicità
       },
       select: {
