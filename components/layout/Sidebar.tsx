@@ -10,6 +10,7 @@ import {
   FileText, 
   Clock, 
   Calendar,
+  CalendarDays,
   MessageSquare,
   BarChart3,
   Settings,
@@ -27,7 +28,8 @@ const navigation = [
   { name: "Task", href: "/tasks", icon: CheckSquare },
   { name: "Fatture", href: "/invoices", icon: FileText },
   { name: "Time Tracking", href: "/time-entries", icon: Clock },
-  { name: "Calendario", href: "/calendar", icon: Calendar },
+  { name: "Scadenziario", href: "/deadlines", icon: Calendar },
+  { name: "Calendario", href: "/calendar", icon: CalendarDays },
   { name: "Comunicazioni", href: "/communications", icon: MessageSquare },
   { name: "Report", href: "/reports", icon: BarChart3 },
 ]
