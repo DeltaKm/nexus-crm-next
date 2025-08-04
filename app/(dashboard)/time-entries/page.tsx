@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns"
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns"
 import { it } from "date-fns/locale"
-import { Calendar, Clock, TrendingUp, DollarSign, Search } from "lucide-react"
+import { Calendar, Clock, TrendingUp, DollarSign, Search, ChevronLeft, ChevronRight } from "lucide-react"
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -22,10 +22,13 @@ import type { Project } from "@/types/project"
 export default function TimeEntriesPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>("today" as TimePeriod)
   const [searchTerm, setSearchTerm] = useState("")
+  const [selectedDate, setSelectedDate] = useState(new Date()) // For month/year navigation
 
   // Calcola le date per il periodo selezionato
   const getDateRange = (period: TimePeriod) => {
     const now = new Date()
+    const baseDate = period === "month" ? selectedDate : now
+    
     switch (period) {
       case "today":
         return {
@@ -39,8 +42,8 @@ export default function TimeEntriesPage() {
         }
       case "month":
         return {
-          startDate: startOfMonth(now).toISOString(),
-          endDate: endOfMonth(now).toISOString(),
+          startDate: startOfMonth(baseDate).toISOString(),
+          endDate: endOfMonth(baseDate).toISOString(),
         }
       default:
         return {
@@ -58,7 +61,7 @@ export default function TimeEntriesPage() {
     isLoading: isLoadingTimeEntries,
     refetch: refetchTimeEntries,
   } = useQuery<TimeEntriesResponse>({
-    queryKey: ["time-entries", selectedPeriod, dateRange],
+    queryKey: ["time-entries", selectedPeriod, dateRange, selectedDate],
     queryFn: async () => {
       const params = new URLSearchParams({
         startDate: dateRange.startDate,
@@ -91,6 +94,31 @@ export default function TimeEntriesPage() {
     const clientMatch = project.client?.name && project.client.name.toLowerCase().includes(searchTerm.toLowerCase())
     return nameMatch || clientMatch
   })
+
+  // Filtra le time entries in base al termine di ricerca
+  const filteredTimeEntries = (timeEntriesData?.timeEntries || []).filter(entry => {
+    if (!searchTerm) return true
+    
+    const descriptionMatch = entry.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    const projectMatch = entry.project?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    const taskMatch = entry.task?.title?.toLowerCase().includes(searchTerm.toLowerCase())
+    const clientMatch = entry.project?.client?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    return descriptionMatch || projectMatch || taskMatch || clientMatch
+  })
+
+  // Funzioni per navigazione mesi
+  const goToPreviousMonth = () => {
+    setSelectedDate(prev => subMonths(prev, 1))
+  }
+
+  const goToNextMonth = () => {
+    setSelectedDate(prev => addMonths(prev, 1))
+  }
+
+  const goToCurrentMonth = () => {
+    setSelectedDate(new Date())
+  }
 
   // Query per i task
   const { data: tasks = [] } = useQuery<any[]>({
@@ -182,17 +210,59 @@ export default function TimeEntriesPage() {
           />
         </div>
 
-        {/* Barra di ricerca progetti */}
+        {/* Barra di ricerca e navigazione mesi */}
         <Card>
           <CardContent className="pt-6">
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Cerca progetti..."
-                className="pl-8"
-                value={searchTerm}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-              />
+            <div className="flex flex-col space-y-4">
+              {/* Barra di ricerca */}
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Cerca time entries, progetti, task..."
+                  className="pl-8"
+                  value={searchTerm}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              
+              {/* Navigazione mesi - solo per il periodo "mese" */}
+              {selectedPeriod === "month" && (
+                <div className="flex items-center justify-between">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToPreviousMonth}
+                    className="flex items-center gap-2"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Mese precedente
+                  </Button>
+                  
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={goToCurrentMonth}
+                      className="text-sm"
+                    >
+                      Oggi
+                    </Button>
+                    <span className="text-sm font-medium">
+                      {format(selectedDate, "MMMM yyyy", { locale: it })}
+                    </span>
+                  </div>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToNextMonth}
+                    className="flex items-center gap-2"
+                  >
+                    Mese successivo
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -276,7 +346,7 @@ export default function TimeEntriesPage() {
               </div>
             ) : (
               <TimeEntriesList
-                timeEntries={timeEntriesData?.timeEntries || []}
+                timeEntries={filteredTimeEntries}
                 projects={filteredProjects}
                 tasks={tasks}
                 onTimeEntryUpdated={() => refetchTimeEntries()}
@@ -293,7 +363,7 @@ export default function TimeEntriesPage() {
               </div>
             ) : (
               <TimeEntriesList
-                timeEntries={timeEntriesData?.timeEntries || []}
+                timeEntries={filteredTimeEntries}
                 projects={filteredProjects}
                 tasks={tasks}
                 onTimeEntryUpdated={() => refetchTimeEntries()}
@@ -310,7 +380,7 @@ export default function TimeEntriesPage() {
               </div>
             ) : (
               <TimeEntriesList
-                timeEntries={timeEntriesData?.timeEntries || []}
+                timeEntries={filteredTimeEntries}
                 projects={filteredProjects}
                 tasks={tasks}
                 onTimeEntryUpdated={() => refetchTimeEntries()}
